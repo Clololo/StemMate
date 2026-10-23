@@ -11,6 +11,7 @@ from PyInstaller.utils.hooks import (
     collect_dynamic_libs,
     collect_submodules,
 )
+from pathlib import PurePath
 
 hiddenimports = [
     "demucs_onnx",
@@ -21,7 +22,6 @@ hiddenimports = [
     "onnxruntime.capi._pybind_state",
     "soundfile",
     "lameenc",
-    "lameenc._lameenc",
     "soxr",
     "huggingface_hub",
     "huggingface_hub.errors",
@@ -93,6 +93,18 @@ a = Analysis(
     excludes=_HEAVY_EXCLUDES,
     noarchive=False,
 )
+
+# Qt6Core imports the unversioned Windows ICU DLL. PyInstaller also discovers
+# PySide's ICU sidecar, but that copy does not expose the entry points expected
+# by Qt 6.12 and causes 0xc0000139 at startup. Windows 10/11 supply the matching
+# system ICU, so keep the bundled sidecar out of the distribution.
+_SYSTEM_ICU_DLLS = {"icuuc.dll", "icudt78.dll"}
+a.binaries = [
+    entry
+    for entry in a.binaries
+    if PurePath(entry[0]).name.lower() not in _SYSTEM_ICU_DLLS
+]
+
 pyz = PYZ(a.pure)
 
 exe = EXE(

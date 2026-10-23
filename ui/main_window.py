@@ -257,6 +257,13 @@ class MainWindow(QMainWindow):
 
         toolbar.addSeparator()
 
+        choose_output_action = QAction("选择输出目录…", self)
+        choose_output_action.setToolTip(
+            "选择后续伴奏的保存位置；未选择时与源文件同目录"
+        )
+        choose_output_action.triggered.connect(self._choose_output_dir)
+        toolbar.addAction(choose_output_action)
+
         open_output_action = QAction("打开输出目录", self)
         open_output_action.triggered.connect(self._open_output_dir)
         toolbar.addAction(open_output_action)
@@ -680,6 +687,21 @@ class MainWindow(QMainWindow):
                 QDesktopServices.openUrl(QUrl.fromLocalFile(str(state.outputs[0].parent)))
                 return
         self.statusBar().showMessage("还没有输出文件。", 4000)
+
+    def _choose_output_dir(self) -> None:
+        """选择后续任务的输出目录，并立即持久化。"""
+        initial = self._settings.output_dir or str(Path.home())
+        path = QFileDialog.getExistingDirectory(self, "选择输出目录", initial)
+        if not path:
+            return
+
+        self._persist_toolbar_settings()
+        self._settings = replace(self._settings, output_dir=str(Path(path))).normalized()
+        try:
+            save_settings(self._settings)
+        except OSError as exc:
+            QMessageBox.warning(self, "保存失败", f"无法写入设置文件：{exc}")
+        self.statusBar().showMessage(f"输出目录已设置为：{path}", 6000)
 
     def _open_harvest(self) -> None:
         targets = [row.path for row in self._rows.values() if row.status == STATUS_NEED_KEY]

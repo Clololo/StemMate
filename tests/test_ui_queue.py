@@ -168,3 +168,39 @@ def test_settings_are_passed_to_pipeline(app, monkeypatch, tmp_path):
     assert str(options.model_dir) == str(tmp_path / "models")
 
     window.close()
+
+
+def test_output_directory_can_be_selected_from_main_window(app, monkeypatch, tmp_path):
+    saved = []
+    selected = tmp_path / "伴奏输出"
+    monkeypatch.setattr(mw, "load_settings", lambda: mw.AppSettings())
+    monkeypatch.setattr(mw, "save_settings", lambda settings: saved.append(settings))
+    monkeypatch.setattr(
+        mw.QFileDialog,
+        "getExistingDirectory",
+        lambda *args, **kwargs: str(selected),
+    )
+
+    window = mw.MainWindow()
+    window._choose_output_dir()
+
+    assert window._settings.output_dir == str(selected)
+    assert saved and saved[-1].output_dir == str(selected)
+    assert window.statusBar().currentMessage().endswith(str(selected))
+
+    window.close()
+
+
+def test_cancelling_output_directory_selection_keeps_settings(app, monkeypatch):
+    saves = []
+    monkeypatch.setattr(mw, "load_settings", lambda: mw.AppSettings())
+    monkeypatch.setattr(mw, "save_settings", lambda settings: saves.append(settings))
+    monkeypatch.setattr(mw.QFileDialog, "getExistingDirectory", lambda *args, **kwargs: "")
+
+    window = mw.MainWindow()
+    window._choose_output_dir()
+
+    assert window._settings.output_dir is None
+    assert saves == []
+
+    window.close()

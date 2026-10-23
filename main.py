@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
 APP_NAME = "伴生 StemMate"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 
 
 def _crash_log_path() -> Path:

@@ -6,3 +6,4 @@ demucs-onnx[mp3]>=0.3.4
 onnxruntime>=1.17
 lameenc>=1.6
 av>=12.0
+requests>=2.31
